@@ -50,3 +50,15 @@ func (s *SignUpForm) ConvertToUser() *BankUser {
 		AadharNo:    s.AadharNo,
 	}
 }
+
+type LoggedInUser struct {
+	Username    string `json:"username" binding:"required"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	Address1    string `json:"address1"`
+	City        string `json:"city"`
+	State       string `json:"state"`
+	PostalCode  string `json:"postalCode"`
+	DateOfBirth string `json:"dob"`
+	AadharNo    string `json:"aadharNo"`
+}
