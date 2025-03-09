@@ -100,6 +100,7 @@ func SignIn(c *gin.Context) {
 func GetLoggedInUser(c *gin.Context) {
 
 	authHeader := c.GetHeader("Authorization")
+	fmt.Println("Auth header: ", authHeader)
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
