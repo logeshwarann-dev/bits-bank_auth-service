@@ -1,4 +1,4 @@
-# bits-bank-auth-service
+# 1️⃣ Auth Service (Authentication & User Management)
 
 # Purpose: Handles user authentication, authorization, and session management.
 
