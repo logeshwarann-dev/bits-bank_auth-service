@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var PostDb *gorm.DB
+var PgDb *gorm.DB
 
 func SignUp(c *gin.Context) {
 	var signupForm db.SignUpForm
@@ -24,7 +24,7 @@ func SignUp(c *gin.Context) {
 	// userID := fmt.Sprintf("%s%s", newUser.FirstName[:3], time.Now().Format("20060102150405000"))
 	newAccount := signupForm.ConvertToUser()
 
-	if err := utils.CreateAccount(PostDb, *newAccount); err != nil {
+	if err := utils.CreateAccount(PgDb, *newAccount); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
@@ -48,7 +48,7 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
-	isValid, validUser, err := utils.VerifyCredentials(PostDb, newLogin)
+	isValid, validUser, err := utils.VerifyCredentials(PgDb, newLogin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error verifying user: %v", err.Error())})
 		return
@@ -126,7 +126,7 @@ func GetLoggedInUser(c *gin.Context) {
 		return
 	}
 
-	loggedInUser, err := utils.GetUserDetails(username, PostDb)
+	loggedInUser, err := utils.GetUserDetails(username, PgDb)
 	if err != nil {
 		fmt.Println("error getting user: ", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to get user: %v", err.Error())})

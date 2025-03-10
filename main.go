@@ -13,7 +13,7 @@ import (
 
 func init() {
 	utils.LoadEnv()
-	api.PostDb = db.ConnectToDB()
+	api.PgDb = db.ConnectToDB()
 	session.InitConnToRedis()
 }
 
