@@ -21,16 +21,18 @@ type SignInForm struct {
 type BankUser struct {
 	// gorm.Model
 	// UserID      string `gorm:"primaryKey"`
-	Email       string `gorm:"primaryKey"`
-	Password    string `gorm:"not null"`
-	FirstName   string `gorm:"not null"`
-	LastName    string `gorm:"not null"`
-	Address1    string `gorm:"not null"`
-	City        string `gorm:"not null"`
-	State       string `gorm:"not null"`
-	PostalCode  string `gorm:"not null"`
-	DateOfBirth string `gorm:"not null"`
-	AadharNo    string `gorm:"unique;not null"`
+	Email             string `gorm:"primaryKey"`
+	Password          string `gorm:"not null"`
+	FirstName         string `gorm:"not null"`
+	LastName          string `gorm:"not null"`
+	Address1          string `gorm:"not null"`
+	City              string `gorm:"not null"`
+	State             string `gorm:"not null"`
+	PostalCode        string `gorm:"not null"`
+	DateOfBirth       string `gorm:"not null"`
+	DwollaCustomerUrl string `gorm:"not null"`
+	DwollaCustomerId  string `gorm:"not null"`
+	AadharNo          string `gorm:"unique;not null"`
 }
 
 func (BankUser) TableName() string {
@@ -61,4 +63,5 @@ type LoggedInUser struct {
 	PostalCode  string `json:"postalCode"`
 	DateOfBirth string `json:"dob"`
 	AadharNo    string `json:"aadharNo"`
+	Email       string `json:"email"`
 }

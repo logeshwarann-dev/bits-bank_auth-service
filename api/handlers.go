@@ -14,6 +14,11 @@ import (
 
 var PgDb *gorm.DB
 
+type DwollaCustomerInfo struct {
+	CustomerId  string `json:"customer_id"`
+	CustomerUrl string `json:"customer_url"`
+}
+
 func SignUp(c *gin.Context) {
 	var signupForm db.SignUpForm
 	if err := c.ShouldBindJSON(&signupForm); err != nil {
@@ -28,7 +33,37 @@ func SignUp(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
-	sessionToken, err := utils.CreateSession(newAccount.Email)
+	newUser := db.LoggedInUser{
+		Username:    newAccount.Email,
+		Email:       newAccount.Email,
+		FirstName:   newAccount.FirstName,
+		LastName:    newAccount.LastName,
+		Address1:    newAccount.Address1,
+		City:        newAccount.City,
+		State:       newAccount.State,
+		PostalCode:  newAccount.PostalCode,
+		DateOfBirth: newAccount.DateOfBirth,
+		AadharNo:    newAccount.AadharNo,
+	}
+
+	var dwollaCustomerResponse DwollaCustomerInfo
+	if err := utils.SendPostRequest(utils.DwollaCreateCustomerUrl, newUser, &dwollaCustomerResponse); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create dwolla account: %v", err.Error())})
+		return
+	}
+
+	if err := utils.UpdateUserWithDwollaInfo(dwollaCustomerResponse.CustomerId, dwollaCustomerResponse.CustomerUrl, PgDb, newUser.Email); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to update dwolla info in db: %v", err.Error())})
+		return
+	}
+
+	CompletedUserAccount, err := db.GetRecordUsingEmail(PgDb, newUser.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to get updated user info from db: %v", err.Error())})
+		return
+	}
+
+	sessionToken, err := utils.CreateSession(CompletedUserAccount.Email)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create session: %v", err.Error())})
 		return
@@ -37,7 +72,7 @@ func SignUp(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":       "User signed up successfully",
 		"session_token": sessionToken,
-		"user":          newAccount,
+		"user":          CompletedUserAccount,
 	})
 }
 

@@ -46,3 +46,11 @@ func GetRecordUsingEmail(authdb *gorm.DB, email string) (BankUser, error) {
 	}
 	return user, nil
 }
+
+func UpdateRecord(authdb *gorm.DB, record BankUser, field string, newValue string) error {
+	result := authdb.Model(&record).Update(field, newValue)
+	if result.Error != nil {
+		return fmt.Errorf("unable to update record: %v", result.Error.Error())
+	}
+	return nil
+}

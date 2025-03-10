@@ -1,8 +1,12 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -10,6 +14,8 @@ import (
 	"github.com/logeshwarann-dev/bits-bank_auth-service/session"
 	"gorm.io/gorm"
 )
+
+var DwollaCreateCustomerUrl string
 
 func CreateAccount(authdb *gorm.DB, user db.BankUser) error {
 	if err := db.AddUser(authdb, user); err != nil {
@@ -55,6 +61,7 @@ func LoadEnv() {
 	db.DB_USER = os.Getenv("DB_USER")
 	db.DB_SSL = os.Getenv("DB_SSL")
 	session.SECRET_KEY = []byte(os.Getenv("JWT_SECRET_KEY"))
+	DwollaCreateCustomerUrl = os.Getenv("PLAID_SERVICE_CREATE_CUSTOMER_URL")
 
 }
 
@@ -110,4 +117,51 @@ func DeleteSession(user string) error {
 	}
 	return nil
 
+}
+
+func SendPostRequest(targetUrl string, payload any, responseContainer any) error {
+	requestPayload, _ := json.Marshal(payload)
+
+	response, err := http.Post(targetUrl, "application/json", bytes.NewBuffer(requestPayload))
+	if err != nil {
+		return fmt.Errorf("error while sending post request: %v", err.Error())
+	}
+	defer response.Body.Close()
+
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return fmt.Errorf("error while reading response: %v", err.Error())
+	}
+
+	result := string(responseBody)
+	fmt.Println("Response from Plaid service: ", result)
+	if err = json.Unmarshal(responseBody, responseContainer); err != nil {
+		return fmt.Errorf("error while unmarshalling response: %v", err.Error())
+	}
+	return nil
+}
+
+func UpdateUserWithDwollaInfo(dwollaCustomerId string, dwollaCustomerUrl string, pgDb *gorm.DB, userEmail string) error {
+	var existingRecord db.BankUser
+	dwollaCustomerIdColumnName := "dwolla_customer_id"
+	dwollaCustomerUrlColumnName := "dwolla_customer_url"
+	existingRecord, err := db.GetRecordUsingEmail(pgDb, userEmail)
+	if err != nil {
+		return fmt.Errorf("unable to get record: %v", err.Error())
+	}
+
+	if err = db.UpdateRecord(pgDb, existingRecord, dwollaCustomerIdColumnName, dwollaCustomerId); err != nil {
+		return fmt.Errorf("unable to update dwolla customer Id: %v", err.Error())
+	}
+
+	existingRecord, err = db.GetRecordUsingEmail(pgDb, userEmail)
+	if err != nil {
+		return fmt.Errorf("unable to get record: %v", err.Error())
+	}
+
+	if err = db.UpdateRecord(pgDb, existingRecord, dwollaCustomerUrlColumnName, dwollaCustomerUrl); err != nil {
+		return fmt.Errorf("unable to update dwolla customer url:: %v", err.Error())
+	}
+
+	return nil
 }
