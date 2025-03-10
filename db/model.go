@@ -18,6 +18,7 @@ type SignInForm struct {
 	Password string `json:"password"`
 }
 
+/*
 type BankUser struct {
 	// gorm.Model
 	// UserID      string `gorm:"primaryKey"`
@@ -34,6 +35,7 @@ type BankUser struct {
 	DwollaCustomerId  string `gorm:"not null"`
 	AadharNo          string `gorm:"unique;not null"`
 }
+*/
 
 func (BankUser) TableName() string {
 	return "bank_users"
@@ -64,4 +66,21 @@ type LoggedInUser struct {
 	DateOfBirth string `json:"dob"`
 	AadharNo    string `json:"aadharNo"`
 	Email       string `json:"email"`
+}
+
+type BankUser struct {
+	// gorm.Model
+	// UserID      string `gorm:"primaryKey"`
+	Email             string `gorm:"primaryKey" json:"email"`
+	Password          string `gorm:"not null" json:"password"`
+	FirstName         string `gorm:"not null" json:"firstName"`
+	LastName          string `gorm:"not null" json:"lastName"`
+	Address1          string `gorm:"not null" json:"address1"`
+	City              string `gorm:"not null" json:"city"`
+	State             string `gorm:"not null" json:"state"`
+	PostalCode        string `gorm:"not null" json:"postalCode"`
+	DateOfBirth       string `gorm:"not null" json:"dateOfBirth"`
+	DwollaCustomerUrl string `gorm:"not null" json:"dwollaCustomerUrl"`
+	DwollaCustomerId  string `gorm:"not null" json:"dwollaCustomerId"`
+	AadharNo          string `gorm:"unique;not null" json:"aadharNo"`
 }

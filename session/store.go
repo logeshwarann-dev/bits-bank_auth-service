@@ -24,6 +24,7 @@ func CreateToken(username string) (string, error) {
 		})
 	tokenString, err := token.SignedString(SECRET_KEY)
 	if err != nil {
+		fmt.Println(err.Error())
 		return "", err
 	}
 	return tokenString, nil
@@ -58,6 +59,7 @@ func InitConnToRedis() error {
 func SetSessionInRedis(username string, jwtToken string) error {
 	sessionKey := fmt.Sprintf("session:%s", username)
 	if err := RedisClient.Set(Ctx, sessionKey, jwtToken, 24*time.Hour).Err(); err != nil {
+		fmt.Println(err.Error())
 		return fmt.Errorf("error while setting session in redis: %v", err.Error())
 	}
 	fmt.Println("Session was set successfully!")
@@ -67,6 +69,7 @@ func SetSessionInRedis(username string, jwtToken string) error {
 func GetSessionFromRedis(sessionKey string) (string, error) {
 	storedToken, err := RedisClient.Get(Ctx, sessionKey).Result()
 	if err != nil {
+		fmt.Println(err.Error())
 		return "", fmt.Errorf("error Session expired: %v", err.Error())
 	}
 	return storedToken, nil
@@ -75,6 +78,7 @@ func GetSessionFromRedis(sessionKey string) (string, error) {
 func DeleteSessionInRedis(sessionKey string) error {
 	deletedCount, err := RedisClient.Del(Ctx, sessionKey).Result()
 	if err != nil {
+		fmt.Println(err.Error())
 		return fmt.Errorf("error deleting session: %v", err.Error())
 	}
 	fmt.Println(deletedCount, " Session deleted in Redis")
