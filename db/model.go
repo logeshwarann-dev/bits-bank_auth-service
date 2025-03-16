@@ -11,6 +11,7 @@ type SignUpForm struct {
 	PostalCode  string `json:"postalCode"`
 	DateOfBirth string `json:"dob"`
 	AadharNo    string `json:"aadharNo"`
+	UserId      string `json:"userId"`
 }
 
 type SignInForm struct {
@@ -52,6 +53,7 @@ func (s *SignUpForm) ConvertToUser() *BankUser {
 		PostalCode:  s.PostalCode,
 		DateOfBirth: s.DateOfBirth,
 		AadharNo:    s.AadharNo,
+		UserID:      s.UserId,
 	}
 }
 
@@ -66,11 +68,11 @@ type LoggedInUser struct {
 	DateOfBirth string `json:"dob"`
 	AadharNo    string `json:"aadharNo"`
 	Email       string `json:"email"`
+	UserId      string `json:"userId"`
 }
 
 type BankUser struct {
 	// gorm.Model
-	// UserID      string `gorm:"primaryKey"`
 	Email             string `gorm:"primaryKey" json:"email"`
 	Password          string `gorm:"not null" json:"password"`
 	FirstName         string `gorm:"not null" json:"firstName"`
@@ -83,4 +85,5 @@ type BankUser struct {
 	DwollaCustomerUrl string `gorm:"not null" json:"dwollaCustomerUrl"`
 	DwollaCustomerId  string `gorm:"not null" json:"dwollaCustomerId"`
 	AadharNo          string `gorm:"unique;not null" json:"aadharNo"`
+	UserID            string `gorm:"unique;not null" json:"userId"`
 }

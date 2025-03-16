@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/logeshwarann-dev/bits-bank_auth-service/db"
@@ -27,7 +28,8 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	// userID := fmt.Sprintf("%s%s", newUser.FirstName[:3], time.Now().Format("20060102150405000"))
+	newUserID := fmt.Sprintf("BITS%s%s", strings.ToUpper(signupForm.FirstName[:3]), time.Now().Format("20060102150405"))
+	signupForm.UserId = newUserID
 	newAccount := signupForm.ConvertToUser()
 
 	if err := utils.CreateAccount(PgDb, *newAccount); err != nil {
@@ -46,6 +48,7 @@ func SignUp(c *gin.Context) {
 		PostalCode:  newAccount.PostalCode,
 		DateOfBirth: newAccount.DateOfBirth,
 		AadharNo:    newAccount.AadharNo,
+		UserId:      newAccount.UserID,
 	}
 
 	var dwollaCustomerResponse DwollaCustomerInfo
