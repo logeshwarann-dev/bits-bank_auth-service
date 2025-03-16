@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -24,7 +25,7 @@ func CreateToken(username string) (string, error) {
 		})
 	tokenString, err := token.SignedString(SECRET_KEY)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return "", err
 	}
 	return tokenString, nil
@@ -52,24 +53,24 @@ func InitConnToRedis() error {
 	})
 	RedisClient = redis
 	Ctx = context.Background()
-	fmt.Println("Redis connection successful!")
+	log.Println("Redis connection successful!")
 	return nil
 }
 
 func SetSessionInRedis(username string, jwtToken string) error {
 	sessionKey := fmt.Sprintf("session:%s", username)
 	if err := RedisClient.Set(Ctx, sessionKey, jwtToken, 24*time.Hour).Err(); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("error while setting session in redis: %v", err.Error())
 	}
-	fmt.Println("Session was set successfully!")
+	log.Println("Session was set successfully!")
 	return nil
 }
 
 func GetSessionFromRedis(sessionKey string) (string, error) {
 	storedToken, err := RedisClient.Get(Ctx, sessionKey).Result()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return "", fmt.Errorf("error Session expired: %v", err.Error())
 	}
 	return storedToken, nil
@@ -78,9 +79,9 @@ func GetSessionFromRedis(sessionKey string) (string, error) {
 func DeleteSessionInRedis(sessionKey string) error {
 	deletedCount, err := RedisClient.Del(Ctx, sessionKey).Result()
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("error deleting session: %v", err.Error())
 	}
-	fmt.Println(deletedCount, " Session deleted in Redis")
+	log.Println(deletedCount, " Session deleted in Redis")
 	return nil
 }

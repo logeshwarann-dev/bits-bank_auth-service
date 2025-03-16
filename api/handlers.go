@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -23,7 +24,7 @@ type DwollaCustomerInfo struct {
 func SignUp(c *gin.Context) {
 	var signupForm db.SignUpForm
 	if err := c.ShouldBindJSON(&signupForm); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -33,7 +34,7 @@ func SignUp(c *gin.Context) {
 	newAccount := signupForm.ConvertToUser()
 
 	if err := utils.CreateAccount(PgDb, *newAccount); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
 
@@ -53,27 +54,27 @@ func SignUp(c *gin.Context) {
 
 	var dwollaCustomerResponse DwollaCustomerInfo
 	if err := utils.SendPostRequest(utils.DwollaCreateCustomerUrl, newUser, &dwollaCustomerResponse); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create dwolla account: %v", err.Error())})
 		return
 	}
 
 	if err := utils.UpdateUserWithDwollaInfo(dwollaCustomerResponse.CustomerId, dwollaCustomerResponse.CustomerUrl, PgDb, newUser.Email); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to update dwolla info in db: %v", err.Error())})
 		return
 	}
 
 	CompletedUserAccount, err := db.GetRecordUsingEmail(PgDb, newUser.Email)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to get updated user info from db: %v", err.Error())})
 		return
 	}
 
 	sessionToken, err := utils.CreateSession(CompletedUserAccount.Email)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create session: %v", err.Error())})
 		return
 	}
@@ -88,14 +89,14 @@ func SignUp(c *gin.Context) {
 func SignIn(c *gin.Context) {
 	var newLogin db.SignInForm
 	if err := c.ShouldBindJSON(&newLogin); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprint("error binding request: ", err.Error())})
 		return
 	}
 
 	isValid, validUser, err := utils.VerifyCredentials(PgDb, newLogin)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("error verifying user: %v", err.Error())})
 		return
 	}
@@ -107,32 +108,32 @@ func SignIn(c *gin.Context) {
 
 	var sessionToken string
 	authHeader := c.GetHeader("Authorization")
-	fmt.Println("Auth header: ", authHeader)
+	log.Println("Auth header: ", authHeader)
 	if authHeader != "" {
 		splitToken := strings.Split(authHeader, " ")
 		if len(splitToken) != 2 || splitToken[0] != "Bearer" {
-			fmt.Println("error: Invalid token format")
+			log.Println("error: Invalid token format")
 		}
 		sessionToken = splitToken[1]
 	}
 
 	if len(sessionToken) > 10 {
-		fmt.Println("Sesion token present")
+		log.Println("Sesion token present")
 		username, err := session.VerifyToken(sessionToken)
 		if err == nil {
 			if err = utils.ValidateSession(username, sessionToken); err == nil {
-				fmt.Println("Valid Session")
+				log.Println("Valid Session")
 				c.JSON(http.StatusOK, gin.H{"message": "User authentication successful!"})
 				return
 			}
-			fmt.Println("Session expired: ", err.Error())
+			log.Println("Session expired: ", err.Error())
 		}
-		fmt.Println("Invalid token", err.Error())
+		log.Println("Invalid token", err.Error())
 	}
 
 	sessionToken, err = utils.CreateSession(newLogin.Email)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to create session: %v", err.Error())})
 		return
 	}
@@ -147,7 +148,7 @@ func SignIn(c *gin.Context) {
 func GetLoggedInUser(c *gin.Context) {
 
 	authHeader := c.GetHeader("Authorization")
-	fmt.Println("Auth header: ", authHeader)
+	log.Println("Auth header: ", authHeader)
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
@@ -162,23 +163,23 @@ func GetLoggedInUser(c *gin.Context) {
 
 	username, err := session.VerifyToken(sessionToken)
 	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("error verifying token: ", err.Error())
+		log.Println(err.Error())
+		log.Println("error verifying token: ", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		return
 	}
 
 	if err = utils.ValidateSession(username, sessionToken); err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("error validation session: ", err.Error())
+		log.Println(err.Error())
+		log.Println("error validation session: ", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Session expired: %v", err.Error())})
 		return
 	}
 
 	loggedInUser, err := utils.GetUserDetails(username, PgDb)
 	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("error getting user: ", err.Error())
+		log.Println(err.Error())
+		log.Println("error getting user: ", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("unable to get user: %v", err.Error())})
 		return
 	}
@@ -202,15 +203,15 @@ func SignOut(c *gin.Context) {
 
 	username, err := session.VerifyToken(sessionToken)
 	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("error verifying token: ", err.Error())
+		log.Println(err.Error())
+		log.Println("error verifying token: ", err.Error())
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		return
 	}
 
 	if err = utils.DeleteSession(username); err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("Error deleting session from Redis:", err.Error())
+		log.Println(err.Error())
+		log.Println("Error deleting session from Redis:", err.Error())
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete session"})
 		return
 

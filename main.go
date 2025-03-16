@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -18,7 +18,7 @@ func init() {
 }
 
 func main() {
-	fmt.Println("Auth service")
+	log.Println("Auth service")
 
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{

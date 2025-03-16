@@ -19,7 +19,7 @@ var DwollaCreateCustomerUrl string
 
 func CreateAccount(authdb *gorm.DB, user db.BankUser) error {
 	if err := db.AddUser(authdb, user); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("error adding user: %v", err.Error())
 	}
 	return nil
@@ -30,11 +30,11 @@ func VerifyCredentials(authdb *gorm.DB, loginDetails db.SignInForm) (bool, db.Lo
 
 	user, err := db.GetRecordUsingEmail(authdb, loginDetails.Email)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return false, db.LoggedInUser{}, err
 	}
 	if user.Password == loginDetails.Password {
-		fmt.Println("Valid User")
+		log.Println("Valid User")
 		return true, db.LoggedInUser{
 			Username:    user.Email,
 			FirstName:   user.FirstName,
@@ -54,7 +54,7 @@ func VerifyCredentials(authdb *gorm.DB, loginDetails db.SignInForm) (bool, db.Lo
 
 func LoadEnv() {
 	if err := godotenv.Load(); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		log.Fatal("Error loading .env file: ", err.Error())
 	}
 
@@ -72,18 +72,18 @@ func LoadEnv() {
 func CreateSession(username string) (string, error) {
 	jwtToken, err := session.CreateToken(username)
 	if err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("error creating token: ", err.Error())
+		log.Println(err.Error())
+		log.Println("error creating token: ", err.Error())
 		return "", fmt.Errorf("error creating token: %v", err.Error())
 	}
 
 	if err = session.SetSessionInRedis(username, jwtToken); err != nil {
-		fmt.Println(err.Error())
-		fmt.Println("error while setting session in redis")
+		log.Println(err.Error())
+		log.Println("error while setting session in redis")
 		return "", err
 	}
 
-	fmt.Println("User session has been created!")
+	log.Println("User session has been created!")
 	return jwtToken, nil
 }
 
@@ -99,7 +99,7 @@ func ValidateSession(user string, sessionToken string) error {
 func GetUserDetails(username string, authdb *gorm.DB) (db.LoggedInUser, error) {
 	user, err := db.GetRecordUsingEmail(authdb, username)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return db.LoggedInUser{}, err
 	}
 
@@ -121,7 +121,7 @@ func GetUserDetails(username string, authdb *gorm.DB) (db.LoggedInUser, error) {
 func DeleteSession(user string) error {
 	sessionKey := fmt.Sprintf("session:%s", user)
 	if err := session.DeleteSessionInRedis(sessionKey); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return err
 	}
 	return nil
@@ -133,21 +133,21 @@ func SendPostRequest(targetUrl string, payload any, responseContainer any) error
 
 	response, err := http.Post(targetUrl, "application/json", bytes.NewBuffer(requestPayload))
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("error while sending post request: %v", err.Error())
 	}
 	defer response.Body.Close()
 
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("error while reading response: %v", err.Error())
 	}
 
 	result := string(responseBody)
-	fmt.Println("Response from Plaid service: ", result)
+	log.Println("Response from Plaid service: ", result)
 	if err = json.Unmarshal(responseBody, responseContainer); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("error while unmarshalling response: %v", err.Error())
 	}
 	return nil
@@ -159,23 +159,23 @@ func UpdateUserWithDwollaInfo(dwollaCustomerId string, dwollaCustomerUrl string,
 	dwollaCustomerUrlColumnName := "dwolla_customer_url"
 	existingRecord, err := db.GetRecordUsingEmail(pgDb, userEmail)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("unable to get record: %v", err.Error())
 	}
 
 	if err = db.UpdateRecord(pgDb, existingRecord, dwollaCustomerIdColumnName, dwollaCustomerId); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("unable to update dwolla customer Id: %v", err.Error())
 	}
 
 	existingRecord, err = db.GetRecordUsingEmail(pgDb, userEmail)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("unable to get record: %v", err.Error())
 	}
 
 	if err = db.UpdateRecord(pgDb, existingRecord, dwollaCustomerUrlColumnName, dwollaCustomerUrl); err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return fmt.Errorf("unable to update dwolla customer url:: %v", err.Error())
 	}
 
