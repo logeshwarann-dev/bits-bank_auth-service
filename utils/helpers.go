@@ -46,6 +46,7 @@ func VerifyCredentials(authdb *gorm.DB, loginDetails db.SignInForm) (bool, db.Lo
 			DateOfBirth: user.DateOfBirth,
 			AadharNo:    user.AadharNo,
 			UserId:      user.UserID,
+			Email:       user.Email,
 		}, nil
 	}
 	return false, db.LoggedInUser{}, nil
@@ -114,6 +115,7 @@ func GetUserDetails(username string, authdb *gorm.DB) (db.LoggedInUser, error) {
 		DateOfBirth: user.DateOfBirth,
 		AadharNo:    user.AadharNo,
 		UserId:      user.UserID,
+		Email:       user.Email,
 	}, nil
 
 }
